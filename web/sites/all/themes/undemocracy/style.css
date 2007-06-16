@@ -84,7 +84,7 @@
 	}
 	
 #content {
-width:700px;
+width:750px;
 margin:0 auto 0 auto;
 }
 
@@ -103,4 +103,229 @@ border:4px solid #888888;
 }
 ul.links li .active {
 background-color:#888888;
+}
+
+
+
+
+
+#content {
+font-family: Verdana, "Bitstream Vera Sans", Geneva, "Lucida Grande", sans-serif;
+font-size:0.9em;
+line-height:1em;
+}
+
+div.italicline
+{
+	text-decoration: italic;
+	color: green;
+	text-align: center;
+	padding-bottom: 10px;
+}
+
+div.italicline-tookchair
+{
+	text-decoration: italic;
+	color: green;
+	text-align: center;
+	padding-bottom: 10px;
+}
+
+div.boldline
+{
+	padding-left:10px;
+	font-weight: bold;
+	text-align: center;
+	color: purple;
+	line-height:2em;
+}
+div.recvote
+{
+	color: blue;
+	border: thin black solid
+}
+div.motiontext
+{
+	font-weight: bold;
+}
+
+h3.speaker
+{
+
+    margin:0;
+	float:left;
+	width:110px;
+	font-size:0.7em;
+}
+
+h3.speaker span {
+	font-weight: bold;
+	display:block;
+	font-size:1.3em;	
+}
+
+div.spokentext
+{
+	padding-left:140px;
+	padding-bottom:10px;
+}
+div.p
+{
+	padding-left:100px;
+	padding-bottom:20px;
+	line-height:1.5em;
+}
+blockquote
+{
+	padding-left:120px;
+	padding-bottom:10px;
+    font-style:italic;
+}
+.votecount
+{
+    display:none;
+}
+
+a.nolink
+{
+	color:gray;
+}
+
+.odd, .even {
+  background-image: url('../../../../themes/undemocracy/images/gradient-inner.png');
+  background-repeat: repeat-x;
+  border: 1px solid #d9eaf5;
+  margin:10px;
+  padding:5px;
+  overflow:auto;
+}
+
+.odd p, .even p {
+	margin:0 20px 1.2em 20px;
+}
+
+.votelist {
+	font-size: 10px;
+    line-height:1em;
+}
+
+.favour {
+  color:green;
+}
+.against {
+  color:red;
+}
+.absent {
+  color:gray;
+}
+#content .item-list .active {
+	background-color:lightgray;
+	font-weight:bold;
+}
+.agenda_box {
+	float:right;
+	border:2px solid gray;
+	width:250px;
+}
+.spoken {
+	clear:both;
+}
+
+div.years ul {
+	margin:-10px 0 0 0;
+	padding:0 0 0 18px;
+	clear:both;
+}
+div.years ul li {
+	list-style-type:none;
+	padding:0;
+	margin:0;
+	width:30px;
+	font-size:10px;
+	display:block;
+	float:left;
+	height:10px;
+}
+code.link {
+	width:90%;
+	overflow:scroll;
+	display:block;
+	border:1px solid gray;
+}
+.hashlink {
+	float:right;
+	background:none;
+	border-width:0;
+}
+.pdf {
+	background-image:url('/sites/all/themes/undemocracy/images/15px-Icons-mini-file_acrobat.gif');
+	background-repeat:no-repeat;
+	background-position:top right;
+	padding-right:16px;
+}
+.block-members li {
+	display:inline;
+	font-size:0.8em;
+}
+.block-members li strong {
+	font-size:1.1em;
+}
+.docmeasures {
+
+	margin:0 auto 0 auto;
+}
+.docmeasuresshort .scrow {
+	background-color:lightgrey;
+}
+.docmeasures .docmeasyear {
+	width:90px;
+
+} 
+.gasess {
+	padding:0 0 0 5px;
+	font-style:italic;
+}
+.bbody {
+	text-align:center;
+}
+.num,.docmeasdocs {
+	text-align:right;
+}
+
+/*.docmeasmeetings,.docmeasres,.docmeasdocs {
+	width:20px;
+}
+*/
+.region-right {
+	float:right;
+	width:20%;
+}
+.region-left {
+	float:left;
+	width:28%;
+	height:160px;
+	overflow:scroll;
+}
+.region-twocol {
+	float:right;
+	width:70%;
+	height:260px;
+	overflow:scroll;
+	
+}
+.region-top {
+
+
+}
+
+.region-center {
+	float:right;
+  width:50%;
+}
+.region {
+	border:1px solid grey;
+}
+
+.speaker img {
+	border:1px solid #D9EAF5;
 }

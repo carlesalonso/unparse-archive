@@ -4,175 +4,62 @@
 
 /**
  * This drupal module links drupal and the result of a xapian search.  
- * The main point of it is to provide the xapian_do_search() function.  
- * I've also added some settings, to make it a bit more pluggable.
+ * The main point of it is to provide the xapian_get_mset() and xapian_do_search() functions.  
  */
 
-/**
- * Implementation of hook_help().
- */
-function xapian_help($section) {
-  switch ($section) {
-    case 'admin/modules#description':
-      return t('Provides options to display content from xapian in drupal, as a node.');
-  }
-}
 
-/**
- * Implementation of hook_menu().
- */
+
 function xapian_menu($may_cache) {
   $items = array();
   if ($may_cache) {
     $items[] = array(
-      'path' => 'admin/settings/xapian',
-      'title' => t('xapian settings'),
-      'access' => user_access('administer xapian'),   
-      'callback' => 'xapian_settings'
+      'path' => 'search',
+      'title' => t('Search'),
+      'access' => user_access('access content'),
+      'callback' => 'search_page'
      );
-     $items[] = array(
-      'path' => 'admin/settings/xapian/settings',
-      'title' => 'Settings',
-      'type' => MENU_DEFAULT_LOCAL_TASK,
-      'weight' => '-10',
-     );
-
-     $items[] = array(
-      'path' => 'admin/settings/xapian/test',
-      'title' => t('Databse test'),
-      'access' => user_access('administer xapian'),
-      'type' => MENU_LOCAL_TASK,
-      'callback' => 'xapian_dbtest'
-     );
-  }
+  }   
   return $items;
 }
 
-
-/**
- *  Module functions
- */
- 
-function xapian_settings() {
-  $output = drupal_get_form('xapian_settings_form', $form);
-  return $output;
-}
-
-function xapian_settings_form() {
-
-  $form['undatapath'] = array(
-    '#type' => textfield,
-    '#title' => 'Path to UN data',
-    '#default_value' => variable_get('xapian_undatapath', '/path/to/undata'),
-    '#description' => 'Location of undata directory',
-  );
-  
-  $form['dbpath'] = array(
-    '#type' => textfield,
-    '#title' => 'Database name',
-    '#default_value' => variable_get('xapian_dbpath', 'xapdex.db'),
-    '#description' => 'Name of xapian database, relitive to the undata directory',
-  );
-
-  $form['submit'] = array(
-    '#type' => submit,
-    '#title' => 'Save',
-    '#value' => 'Save',
-  );
-  return $form;
-} 
-
-function xapian_settings_form_submit($form_id, $form) {
-  variable_set('xapian_dbpath', $form['dbpath']);
-  
-  if (substr($form['undatapath'], -1, 1) != '/') {
-    $form['undatapath'] .= "/";
+function search_page() {
+	$q = arg(1);
+  $search = xapian_do_search($q);
+  $output = array();
+  $output[] = $search->info;
+  foreach($search->data as $result) {
+  	$output[] = theme('document_segment',$result);
   }
-  variable_set('xapian_undatapath', $form['undatapath']);
+  return implode(' ',$output);
 }
 
-function xapian_dbtest() {
-  $output = drupal_get_form('xapian_dbtest_form', $form);
-  return $output;
-}
 
-function xapian_dbtest_form() {
-  $q = arg(4);
-  $form['search'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Search'),
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE, 
-  );
+function xapian_get_mset($query, $undata_path = NULL, $db_path = NULL) {
 
-  $form['search']['word'] = array(
-    '#type' => textfield,
-    '#title' => 'Search',
-    '#default_value' => $q,
-  );
-
-  $form['search']['submit'] = array(
-    '#type' => submit,
-    '#title' => 'Search',
-    '#value' => 'Search',
-  );
-
-  if (arg(4)) {
-    $form['result'] = array(
-      '#value' => "<h2>results</h2>",
-    );
-    $result = xapian_do_search($q);
-    if (is_array($result->data)) {
-      foreach ($result->data as $item) {
-        $results .= $item['file'] . "<br />\n";
-      }
-    }
-    $form['result_content'] = array(
-      '#value' => $results,
-    );
-
+  if (!$db_path) {
+    $db_path = "/home/undemocracy/undata/xapdex.db/";
   }
-  return $form;
-}
-
-
-function xapian_dbtest_form_submit($form_id, $form) {
-  $q = $form['word'];
-//  $q = str_replace('/', 'x', $q);
-  return 'admin/settings/xapian/test/' . $q;
-}
-
-
-/**
- * This is the main search function, that tries to copy xapque.py
- */
-
-function xapian_do_search($query, $undata_path = NULL, $db_path = NULL) {
   
   if (!$undata_path) {
     // XXX what should we call this parameter? is location of undata directory
-    $undata_path = variable_get('xapian_undatapath', '/path/to/undata');
+    $undata_path = un_get_doc_path();
   }
   if (substr($undata_path, -1, 1) != '/') {
     $undata_path .= "/";
   }
   
-  if (!$db_path) {
-    $db_path = variable_get('xapian_dbpath', 'path/to/database.db');
-  }
-  
-  $db_path = $undata_path . $db_path;
-if (file_exists('xapian_php5.php')) {  
-  include_once('xapian_php5.php' );
-}
+
+  // Stupid thing I have to do for my PC - Sym
+//  if (file_exists('xapian_php5.php')) {  
+    include_once('xapian_php5.php' );
+  // }
+
   // XXX this doesn't break well if it can't find the database
   $database = new XapianDatabase($db_path);  
 
   $enquire = new XapianEnquire($database);
   $stemmer = new XapianStem("english");
-  
-  
-  
+
   // XXX this for my testing when not in drupal as don't have "arg()".
   // However, not sure what the $query parameters was for anyone when
   // running under Drupal?
@@ -196,30 +83,54 @@ if (file_exists('xapian_php5.php')) {
   $queryparser->add_boolean_prefix("document", "D");
   $queryparser->add_boolean_prefix("reference", "R");
   $queryparser->add_boolean_prefix("date", "E");
-  $queryparser->add_boolean_prefix("heading", "H");
+  $queryparser->add_boolean_prefix("agenda", "A");
+  $queryparser->add_boolean_prefix("session", "Z");
+  $queryparser->add_boolean_prefix("vote", "V");
 
-  $query = $queryparser->parse_query($terms);
+  $query = $queryparser->parse_query($terms,16+4+2+1);
 
   $enquire->set_query($query);
 
   # XXX for actual searches will want to sort by relevance instead, or fancier
   # things like set_sort_by_value_then_relevance
-  $enquire->set_sort_by_value(0, false); // false for order forwards in date/time
+  $enquire->set_sort_by_value(0, 1);
+  $enquire->set_weighting_scheme(new XapianBoolWeight());  
+  (object)$result->enquire = $enquire;
+  $result->query = $query;
+  
+  return $result;
+}
 
+
+
+
+function xapian_do_search($query, $start=0, $count=100) {
+
+  $result = xapian_get_mset($query);
+  $query = $result->query;
+  $enquire = $result->enquire;
 
   # XXX will want more than 100 here! See mset_get_matches_estimated in
   # searchengine.php from TWFY for code to work out set result sizes
   # And Olly says "I suspect you might want to look at the "check_at_least" parameter to
   # Enquire::get_mset()..."
-  $matches = $enquire->get_mset(0, 100); 
+  $matches = $enquire->get_mset($start, $count);  
 
   $result->info = $query->get_description();
   $mseti = $matches->begin();
   while (! $mseti->equals($matches->end())) {  
     $doc = $mseti->get_document();
     $doc_data = $doc->get_data();
-    list($doc_file, $doc_offset, $doc_len) = split("\|", $doc_data);
-    $result->data[] = array('file' => $doc_file, 'offset' => $doc_offset, 'len' => $doc_len);
+
+//temp hack whilst i'm waiting for a reparse
+  if (count(split("\|",$doc_data)) == 5) {
+    list($doc_file, $doc_offset, $doc_len, $heading,$full_doc_len) = split("\|", $doc_data);
+    $result->data[] = array('file' => $doc_file, 'offset' => $doc_offset, 'len' => $doc_len, 'heading' => $heading,'full_doc_len'=>$full_doc_len);	
+  } else {
+    list($para_id, $doc_file, $doc_offset, $doc_len, $heading,$full_doc_len) = split("\|", $doc_data);
+    $result->data[] = array('para_id'=> $para_id,'file' => $doc_file, 'offset' => $doc_offset, 'len' => $doc_len, 'heading' => $heading,'full_doc_len'=>$full_doc_len);
+  }
+
     // Next result
     $mseti->next();
   }
