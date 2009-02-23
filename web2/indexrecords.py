@@ -7,11 +7,13 @@ from basicbits import EncodeHref
 
 # put back in for now
 from basicbits import indexstuffdir, htmldir
+from db import GetDBcursor
 
 class SecRecord:
     def __init__(self, stext):
         self.bGA, self.bSC = False, True
         self.bparsed = True
+        self.topic = "Not set"
         for sp, val in re.findall('<span class="([^"]*)">([^<]*)</span>', stext):
             if sp == "documentid":
                 self.docid = val
@@ -90,6 +92,7 @@ class AgRecord:
             params['highlightdoclink'] = highlight
         if gid:
             params['gid'] = gid
+            #params['gadice'] = gid  # makes the link do the section ; only works if gid is for the header!
         return EncodeHref(params)
 
     def GetDesc(self, highlight = None, gid = None):
@@ -112,7 +115,6 @@ def LoadAgendaNames(agendaname):
             agendanamesf = os.path.join(agendaindexesdir, cagendaname + ".html")
             if os.path.isfile(agendanamesf):
                 lagendanamesf.append(agendanamesf)
-
 
     res = [ ]
     for agendanamesf in lagendanamesf:

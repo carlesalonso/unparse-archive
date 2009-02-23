@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: latin1 -*-
 
 # unparse/bin/xapdex.py - Index Julian's UN HTML in Xapian. Run with --help
 # for command line options.
@@ -81,9 +82,15 @@ def CharToFlat(st):
     if re.match("[a-z0-9]+$", st):
         return st
 
-    st = DownAscii(st)
+    st = DownAscii(st).lower()
 
-    assert re.match("[a-z0-9]+$", st), "unprocessed st: %s" % st
+    if not re.match("[a-z0-9]+$", st):
+        print "Writing bad character to tail of downascii.py"
+        fout = open("downascii.py", "a")
+        fout.write("# " + st + "\n")
+        fout.close()
+        assert False, "unprocessed st: %s" % st
+        
     return st
 
 

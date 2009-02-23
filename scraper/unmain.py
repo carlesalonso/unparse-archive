@@ -18,6 +18,7 @@ from gasummaries import ScrapeGASummaries, ParseScrapeGASummaries
 from wpediaget import FetchWikiBacklinks
 from gennatdata import GenerateNationData
 from nationdatasucker import ScrapePermMissions, NationDataSucker
+from dbfill import DBfill
 
 parser = OptionParser()
 parser.set_usage("""
@@ -26,6 +27,7 @@ Parses and scrapes UN verbatim reports of General Assembly and Security Council
   scrape  do the downloads
   cxml    do the pdf conversion
   parse   do the parsing
+  dbfill  upload the parsed headings etc into database
   xapdex  call the xapian indexing system
   votedistances generate voting distances table for java applet
   docmeasurements generate measurements of quantities of documents;
@@ -73,6 +75,10 @@ parser.add_option("--scrape-links",
 parser.add_option("--doc",
                   dest="scrapedoc", metavar="scrapedoc", default="",
                   help="Causes a single document to be scraped")
+parser.add_option("--force-dbfill", action="store_true", dest="forcedbfill", default=False,
+                  help="Erases existing valies and adds them to table again")
+parser.add_option("--force-docmeasurements", action="store_true", dest="forcedocmeasurements", default=False,
+                  help="Causes all docmeasurements to be run again")
 parser.add_option("--force-xap", action="store_true", dest="forcexap", default=False,
                   help="Erases existing database, and indexes all .html files")
 parser.add_option("--limit", dest="limit", default=None, type="int",
@@ -93,6 +99,7 @@ bScrape = "scrape" in args
 bConvertXML = "cxml" in args
 bParse = "parse" in args
 bXapdex = "xapdex" in args
+bDBfill = "dbfill" in args
 bDocMeasurements = "docmeasurements" in args
 bAgendanames = "agendanames" in args
 bDocimages = "docimages" in args
@@ -103,7 +110,7 @@ bGAsummaries = "gasummaries" in args
 bNationData = "nationdata" in args
 bVoteDistances = "votedistances" in args
 
-if not (bScrape or bConvertXML or bParse or bVoteDistances or bXapdex or bIndexfiles or bDocMeasurements or bDocimages or bScrapewp or bAgendanames or bSCsummaries or bNationData or bGAsummaries):
+if not (bScrape or bConvertXML or bParse or bVoteDistances or bDBfill or bXapdex or bIndexfiles or bDocMeasurements or bDocimages or bScrapewp or bAgendanames or bSCsummaries or bNationData or bGAsummaries):
     parser.print_help()
     sys.exit(1)
 
@@ -111,7 +118,8 @@ if not (bScrape or bConvertXML or bParse or bVoteDistances or bXapdex or bIndexf
 if bScrape:
     if not options.stem and not options.scrapedoc:  # default case
         ScrapeContentsPageFromStem("A-62-PV")
-        ScrapeContentsPageFromStem("S-2007-PV")
+        ScrapeContentsPageFromStem("A-63-PV")
+        ScrapeContentsPageFromStem("S-2008-PV")
     if options.scrapedoc:
         ScrapePDF(options.scrapedoc, bforce=False)
     if options.stem:
@@ -119,8 +127,8 @@ if bScrape:
 
 if bConvertXML:
     if not stem:
-        ConvertXML("S-PV.5", pdfdir, pdfxmldir, False)
-        ConvertXML("A-62-PV", pdfdir, pdfxmldir, False)
+        ConvertXML("S-PV.[56]\d\d\d", pdfdir, pdfxmldir, False)
+        ConvertXML("A-6[23]-PV", pdfdir, pdfxmldir, False)
     elif re.match("A-(?:49|[56]\d)-PV", stem):  # year 48 is not parsable
         ConvertXML(stem, pdfdir, pdfxmldir, options.forcecxml)
     elif re.match("S-PV", stem):  # make sure it can't do too many at once
@@ -131,18 +139,21 @@ if bConvertXML:
 
 if bParse:
     if not stem:
-        ParsetoHTML("A-62-PV", pdfxmldir, htmldir, options.forceparse, options.editparse, options.continueonerror)
-        ParsetoHTML("S-PV.5[6-9]", pdfxmldir, htmldir, options.forceparse, options.editparse, options.continueonerror)
+        ParsetoHTML("A-63-PV", pdfxmldir, htmldir, options.forceparse, options.editparse, options.continueonerror)
+        ParsetoHTML("S-PV.6\d\d\d", pdfxmldir, htmldir, options.forceparse, options.editparse, options.continueonerror)
     else:
         ParsetoHTML(stem, pdfxmldir, htmldir, options.forceparse, options.editparse, options.continueonerror)
     PrintNonnationOccurrances()
+
+if bDBfill:
+    DBfill(stem, options.forcedbfill, options.limit, options.continueonerror, htmldir)
 
 if bXapdex:
     GoXapdex(stem, options.forcexap, options.limit, options.continueonerror, htmldir, xapdir)
 
 # makes docmeasurements.html, docyears/ and backpointers in pdfinfo/
 if bDocMeasurements:
-    WriteDocMeasurements(htmldir, pdfdir, pdfinfodir, indexstuffdir)  # number of documents in each year of each type
+    WriteDocMeasurements(stem, options.forcedocmeasurements, htmldir, pdfdir, pdfinfodir, indexstuffdir)  # number of documents in each year of each type
 
 if bAgendanames:
     f = os.path.join(indexstuffdir, "agendanames.html")
@@ -151,7 +162,7 @@ if bAgendanames:
     if IsNotQuiet():
         print "Writing agenda summaries to file:", lf
     fout = open(lf, "w")
-    WriteAgendaSummaries(htmldir, fout, agendaindexdir)  # number of documents in each year of each type
+    WriteAgendaSummaries(stem, htmldir, fout, agendaindexdir)  # number of documents in each year of each type
     fout.close()
     if sys.platform == "win32" and os.path.isfile(f):
         os.remove(f)
@@ -167,7 +178,7 @@ if bSCsummaries:
     if IsNotQuiet():
         print "Writing SC summaries to file:", lf
     fout = open(lf, "w")
-    WriteSCSummaries(scsummariesdir, htmldir, pdfdir, fout)  # number of documents in each year of each type
+    WriteSCSummaries(stem, scsummariesdir, htmldir, pdfdir, fout)  # number of documents in each year of each type
     fout.close()
     if sys.platform == "win32" and os.path.isfile(f):
         os.remove(f)

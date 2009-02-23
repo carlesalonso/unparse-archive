@@ -14,7 +14,7 @@ respek = """(?x)<b>([^<]*?)\s*</b>   # group 1  speaker name
             (?:.{0,150}(?:situation\sin\sAngola|\(1999\)))?
             (?:\s*(?:\(|<i>)+
                 (?:spoke\sin|interpretation\sfrom)\s(\w+)    # group 5  speaker language
-                (?:.{0,60}?(?:by|the)\sdelegation)?   # translated by [their] delegation
+                (?:.{0,60}?(?:by|the)\s(?:delegation|speaker))?   # translated by [their] delegation
             (?:\)|</i>)+)?
             \s*
             (?:<i>:</i>|<b>\s*:\s*</b>|:)    # make sure we get a colon
@@ -164,7 +164,7 @@ def DetectSpeaker(ptext, indents, paranum, speakerbeforetookchair):
             if IsNotQuiet(): # allow for less strict when done by cronjob
                 raise unexception("missing nation for %s" % speakr, paranum)
 
-        if not re.match("Mr\.|Mrs\.|Miss |Ms\.|Pope |The |King |Sultan |Prince |Secretary|Arch|Dr\.|Sir |Sheikh? |President |Monsignor |Chairman |Crown |His |Dame |Senator |Cardinal |Chief |Captain |Acting |Begum |Major-General |Shaikh |Judge |Count |Emir |Baroness |General |Nana |Princess |U |Rev\. |Kofi |Sayyid |Sheika |Bishop |Sir. |Wilmot |Eliza |Jos|Lord |Justice |Commodore |Metropolitan |Transcript", speakr):
+        if not re.match("Mr\.|Mrs\.|Miss |Ms\.|Pope |The |King |Sultan |Prince |Secretary|Arch|Dr\.|Sir |Sheikh?a? |President |Monsignor |Chairman |Crown |His |Dame |Senator |Cardinal |Chief |Captain |Acting |Begum |Major-General |Shaikh |Judge |Count |Emir |Baroness |General |Nana |Princess |U |Rev\. |Kofi |Sayyid |Sheika |Bishop |Sir. |Wilmot |Eliza |Jos|Lord |Justice |Father |Commodore |Metropolitan |Transcript|Madam ", speakr):
             print speakr
             raise unexception("improper title on speaker", paranum)
         if re.search("[\.,:;]$", speakr):
@@ -233,7 +233,7 @@ def DetectSpeaker(ptext, indents, paranum, speakerbeforetookchair):
             matinvite = re.match("(?:At the invitation of the President, )?.*? (?:(?:took (?:a |the )?|were escorted to their )seats? at the Council table|(?:took|was invited to take) (?:(?:the |a |their )?(?:seat|place)s? reserved for \w+|a seat|a place|places|seats|their seats|his seat) at the (?:side of the )?Council (?:[Cc]hamber|table))(?:;.*?Chamber)?\.$", ptext)
             mscsilence = re.match("The members of the (?:Security )?Council observed a minute of silence.$", ptext)
             mscescort = re.search("(?:were|was) escorted to (?:seats|a seat|his place|a place) at the (?:Security )?Council table.$", ptext)
-            mvtape = re.match("A video ?tape was (?:shown|played) in the Council Chamber.$|An audio tape, in Arabic,", ptext)
+            mvtape = re.match("A video ?(?:tape)? was (?:shown|played|displayed) in the Council Chamber.$|An audio tape, in Arabic,|The members of the General Assembly heard a musical performance.$", ptext)
             mvprojscreen = re.match("(?:An image was|Two images were|A video was) projected on screen\.$", ptext)
             mvresuadjourned = re.match("The meeting was resumed and adjourned on.*? a\.m\.$", ptext)
 
@@ -281,7 +281,7 @@ AgendaTypeMap = [ ("condolence", "(?:floods|flood in|tropical storm|earthquake|t
                   ("report", "(The situation in|action on the list|list of accredited civil society actors)(?i)"),
                   ("misc", "(?:UNICEF Executive Board|Observance of the Week of Solidarity|Date of the commemoration|Dates of the.*? Dialogue)(?i)"),
                   ("misc", "(?:Adoption of the draft resolution|continuation of statements|Agenda items(?: that remain| remaining) for consideration|Request for the inclusion of an additional|informal interactive hearings)(?i)"),
-                  ("misc", "(?:programme|high-level.*?meeting|high-level.*?dialogue|organization of(?: the)? work|tribute|closure|announcement|postponement of(?: the)? date)(?i)"),
+                  ("misc", "(?:programme|high-level.*?meeting|meeting on the global|high-level.*?dialogue|organization of(?: the)? work|tribute|closure|announcement|postponement of(?: the)? date)(?i)"),
                   ("misc", "(?:statements? on the occasion|expression of welcome|expression of thanks|adoption of the agenda|Participation.*? in the work|extension of the work|apportionment of the expenses)(?i)"),
                   ("misc", "(?:Drawing of lots for the seating protocol)(?i)"),
                 ]
@@ -342,8 +342,8 @@ def CleanupTags(ptext, typ, paranum):
         ptext = re.sub("<b>([.,]\s*)</b>", "\\1", ptext)
 
     # slipt in a cleaning substitution here (can't find a better place for now)
-    ptext = re.sub("[`´]", "'", ptext)
-    ptext = re.sub("[­]", "-", ptext)  # some very invisibley different symbol
+    ptext = re.sub("[u'`\u017d']", "'", ptext)
+    ptext = re.sub(u'[\xad]', "-", ptext)  # some very invisibley different symbol
 
     # could have a special paragraph type for this
     mspokein = re.match("\((spoke in \w+(.*?delegation|President's Office)?)\)$", ptext)
@@ -454,11 +454,21 @@ class SpeechBlock:
                 if not re.match(reboldline, tlc.paratext):
                     break
                 ptext = MarkupLinks(CleanupTags(tlc.paratext, self.typ, self.paranum), self.undocname, self.paranum)
+                
+                # a second agenda number gets found
                 if not self.bSecurityCouncil and re.match("Agenda(?: item)? \d+(?i)", ptext):
-                    assert re.search("misc|show", self.agendanum), self.agendanum
-                    self.agendanum = DetectAgendaForm(ptext, self.genasssess, prevagendanum, self.paranum)
-                    print "agendanum from second line", self.agendanum
-                    assert self.agendanum, ptext
+                    agendanum2 = DetectAgendaForm(ptext, self.genasssess, prevagendanum, self.paranum)
+                    print "agendanum from second line", agendanum2
+                    assert agendanum2, ptext # must detect it
+                    if re.search("misc|show|address", self.agendanum):
+                        self.agendanum = agendanum2   # a woolly agenda can be over-ridden
+                    elif self.undocname == "A-62-PV.74":
+                        self.agendanum = "%s,%s" % (self.agendanum, agendanum2)
+                    else:
+                        print self.agendanum
+                        print ptext
+                        raise unexception(" unknown extra agendanum case", self.paranum)
+                    print "aaaa2aa  ", self.agendanum
                 self.paragraphs.append((tlc.lastindent and "boldline-indent" or "boldline-p", ptext))
                 self.i += 1
             return

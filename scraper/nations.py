@@ -1,6 +1,7 @@
-import re
-from unmisc import unexception
+# -*- coding: utf8 -*-
 
+import re
+#from unmisc import unexception
 
 # list of nations and their dates as part of the General Assembly can be found at
 # http://www.un.org/Overview/unmember.html
@@ -36,7 +37,7 @@ fin.close()
 # includes typos, short names, and name changes
 nationmapping = {
         "United Kingdom of Great Britain and Northern Ireland":"United Kingdom",
-        "Côte d'Ivoire":"Cote d'Ivoire",
+        u"C\xf4te d'Ivoire":"Cote d'Ivoire",
         "the former Yugoslav Republic of Macedonia":"The former Yugoslav Republic of Macedonia",
         "Federal Republic of Yugoslavia":"Yugoslavia",
         "Syrian Arab Republic":"Syria",
@@ -466,3 +467,38 @@ for nonnation in nonnationlist.split("\n"):
 # further non-nations will get appended here during parsing, for later incorporation
 # it's a map because because it adds up how many of each one have occurred
 
+nonnationscount["International Institute for Democracy and Electoral Assistance"] = 0
+nonnationscount["Eurasian Economic Community"] = 0
+nonnationscount["Special Representative of the Secretary-General for Children and Armed Conflict"] = 0
+nonnationscount["Watchlist on Children and Armed Conflict"] = 0
+nonnationscount["PLAN International"] = 0
+nonnationscount["Executive Director of the Counter-Terrorism Committee Executive Directorate"] = 0
+nonnationscount["Commissioner of the United Nations International Independent Investigation Commission"] = 0
+nonnationscount["United Nations Peacebuilding Support Office in Guinea-Bissau"] = 0
+nonnationscount["Commission of the African Union"] = 0
+nonnationscount["Assistant Secretary-Genral for Political Affairs"] = 0
+nonnationscount["Director and Deputy to the High Representative for Disarmament Affairs"] = 0
+nonnationscount["Office for Disarmament Affairs"] = 0
+nonnationscount["Assistant Secretary-General"] = 0
+nonnationscount["Under-Secretary-General for Peacekeeping Affairs"] = 0
+nonnationscount["High Representative of the Peace Agreement on Bosnia and Herzegovina"] = 0
+nonnationscount["Prosecutor of the International Criminal Court"] = 0
+nonnationscount["International Tribunal for the Former Yugoslavia"] = 0
+nonnationscount["International Criminal Tribunal for Rwanda"] = 0
+nonnationscount["Kosovo"] = 0
+nonnationscount["Special Adviser on the International Compact with Iraq and Other Political Issues"] = 0
+nonnationscount["Assistant Secretary-General and Controller, Office of Programme Planning, Budget and Accounts"] = 0
+nonnationscount["Department of Political Affairs"] = 0
+nonnationscount["United Nations office in Vienna"] = 0
+nonnationscount["Committee of the Watchlist on Children and Armed Conflict"] = 0
+nonnationscount["Coordination of Action Research on AIDS"] = 0
+nonnationscount["Department of Peacekeeping Affairs"] = 0
+nonnationscount["Working Group on Women, Peace and Security"] = 0
+nonnationscount["Special Envoy for the Implementation of Security Council Resolution"] = 0
+nonnationscount["High Representative for Disarmament Affairs"] = 0
+nonnationscount["Department of Peacekeeping Operations"] = 0
+nonnationscount["International Maritime Organization"] = 0
+nonnationscount["International Criminal Tribunal for the Former Yugoslavia"] = 0
+nonnationscount["Eurasian Development Bank"] = 0
+nonnationscount["Organization for Security and Co-operation in Europe"] = 0
+nonnationscount["Department of General Assembly and Conference Management"] = 0

@@ -4,12 +4,15 @@ import re
 import cgi
 
 from basicbits import indexstuffdir, ReadLogReferrers, LongDate
+from db import GetDBcursor
+import datetime
 
 def Wikiredirect(wrefpage):
     
     # some standard mistakes
     wrefpage = re.sub("^UN_(?i)", "United_Nations_", wrefpage)
     wrefpage = re.sub("^United_Nations_Resolution_(?i)", "United_Nations_Security_Council_Resolution_", wrefpage)
+    return wrefpage  # disable below for now
 
     fin = open("wikiredirects.txt")
     mainname = ""
@@ -61,23 +64,59 @@ def ConvertName(wname):
 
     return wname
 
+
+def TimeAgo(ltime):
+    timeago = datetime.datetime.now() - ltime
+    hours = timeago.seconds / 3600
+    minutes = (timeago.seconds / 60) % 60
+    seconds = timeago.seconds % 60
+    if hours >= 5:
+        return "%d hours ago" % hours
+    if hours != 0:
+        return "%d hours, %d minutes ago" % (hours, minutes)
+    if minutes >= 5:
+        return "%d minutes ago" % minutes
+    if minutes == 1:
+        return "1 minute, %d seconds ago" % seconds
+    if minutes != 0:
+        return "%d minutes, %d seconds ago" % (minutes, seconds)
+    return "%d seconds ago" % seconds
+
+
 def ShortWikipediaTable(nentries):
-    lres = ReadWikipediaReferrers()
+    c = GetDBcursor()
+    c.execute("SELECT max(ltime) AS mtime, count(*), referrer, reftitle FROM unlog_incoming WHERE refdomain = 'en.wikipedia.org' GROUP BY reftitle ORDER BY mtime DESC LIMIT %d;" % nentries)
+    lres = c.fetchall()
     res = [ ]
-    for wpref in lres[:nentries]:
-        res.append((LongDate(wpref[0][:10]), wpref[0][11:], wpref[1], wpref[2], ConvertName(wpref[3])))
+    for wpref in lres:
+        dt = wpref[0].strftime("%Y-%m-%d;%H:%M")
+        #res.append((LongDate(dt[:10]), dt[11:], wpref[1], wpref[2], ConvertName(wpref[3])))
+        res.append((TimeAgo(wpref[0]), "", wpref[1], wpref[2], ConvertName(wpref[3])))
+    return res
+
+def ShortWikipediaTableM(nentries):
+    c = GetDBcursor()
+    c.execute("SELECT max(ltime) AS mtime, count(*), referrer, reftitle FROM unlog_incoming WHERE refdomain = 'en.wikipedia.org' GROUP BY reftitle ORDER BY mtime DESC LIMIT %d;" % nentries)
+    lres = c.fetchall()
+    res = [ ]
+    for wpref in lres:
+        dt = wpref[0].strftime("%Y-%m-%d;%H:%M")
+        #res.append((LongDate(dt[:10]), dt[11:], wpref[1], wpref[2], ConvertName(wpref[3])))
+        res.append({"timeago":TimeAgo(wpref[0]), "count":wpref[1], "referrer":wpref[2], "title":ConvertName(wpref[3])})
     return res
 
 def BigWikipediaTable():
-    wprefs = ReadLogReferrers("logpages_wikipedia.txt")
-    wprefs.extend(ReadLogReferrers("logpages_wikipedia_1.txt"))
+    #wprefs = ReadLogReferrers("logpages_wikipedia.txt")
+    #wprefs.extend(ReadLogReferrers("logpages_wikipedia_1.txt"))
+    #wprefs.extend(ReadLogReferrers("logpages_wikipedia_2.txt"))
+    c = GetDBcursor()
+    c.execute("SELECT max(ltime) AS mtime, min(ltime), count(*), referrer, reftitle FROM unlog_incoming WHERE refdomain = 'en.wikipedia.org' GROUP BY reftitle ORDER BY reftitle;")
+    lres = c.fetchall()
     res = [ ] # wikiname, docid, page, date, wikifullurl
-    for wpref in wprefs:
-        mref = re.match("(http://en.wikipedia.org/wiki/)([^#/]*)(#.*)?$", wpref[1])
-        if not mref:
-            continue
-        wrefpage = Wikiredirect(mref.group(2))
-        wikifullurl = "%s%s%s" % (mref.group(1), wrefpage, mref.group(3) or "")
-        res.append((ConvertName(wrefpage), wpref[2], wpref[3], wpref[0], wikifullurl))
-    res.sort()
+    for wpref in lres:
+        res.append((wpref[0], wpref[1], wpref[2], wpref[3], ConvertName(wpref[4])))
+        #wrefpage = Wikiredirect(mref.group(2))
+        #wikifullurl = "%s%s%s" % (mref.group(1), wrefpage, mref.group(3) or "")
+        #res.append((ConvertName(wrefpage), wpref[2], wpref[3], wpref[0], wikifullurl))
+    #res.sort()
     return res

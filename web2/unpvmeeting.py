@@ -6,7 +6,7 @@ import datetime
 import urllib
 from basicbits import WriteGenHTMLhead, EncodeHref, monthnames, MarkupLinks, LongDate, GenWDocLink, basehref, nowdatetime
 from indexrecords import LoadAgendaNames
-
+from quickskins import WebcastLink
 
 def WriteSpoken(gid, dtext, councilpresidentnation):
     print '<div class="speech" id="%s">' % gid
@@ -208,7 +208,7 @@ def WritePrevNext(pdfinfo, gadice):
     #thislink = EncodeHref({"pagefunc":"meeting", "docid":pdfinfo.pdfc})
     #print '<p><a href="%s">This meeting held on %s from %s to %s</a></p>' % (pdfinfo.sdate, pdfinfo.time, pdfinfo.rosetime)
     print '<table>'
-    print '<tr class="meeting-date"><th>Date</th><td>%s</td></tr>' % LongDate(pdfinfo.sdate)
+    print '<tr class="meeting-date"><th>Date</th><td><b>%s</b></td></tr>' % LongDate(pdfinfo.sdate)
     if not gadice:
         print '<tr class="meeting-time"><th>Started</th><td>%s</td></tr>' % pdfinfo.time
         print '<tr class="meeting-rosetime"><th>Ended</th><td>%s</td></tr>' % pdfinfo.rosetime
@@ -220,14 +220,18 @@ def WritePrevNext(pdfinfo, gadice):
     
     print '<ul>'
     if gadice:
-        currlink = EncodeHref({"pagefunc":"meeting", "docid":pdfinfo.pdfc})
-        print '<li><a href="%s" title="Full meeting">Full meeting</a></li>' % currlink
+        currlink = EncodeHref({"pagefunc":"meeting", "docid":pdfinfo.pdfc, "gid":gadice})
+        print '<li><a href="%s" title="Full meeting"><b>Full meeting</b></a></li>' % currlink
     if not gadice and pdfinfo.prevmeetingdetails:
         prevlink = EncodeHref({"pagefunc":"meeting", "docid":pdfinfo.prevmeetingdetails[0]})
         print '<li><a href="%s" title="Previous meeting: finished %s %s">Previous meeting</a></li>' % (prevlink, pdfinfo.prevmeetingdetails[1], pdfinfo.prevmeetingdetails[2])
     if not gadice and pdfinfo.nextmeetingdetails:
         nextlink = EncodeHref({"pagefunc":"meeting", "docid":pdfinfo.nextmeetingdetails[0]})
         print '<li><a href="%s" title="Next meeting: started %s %s">Next meeting</a></li>' % (nextlink, pdfinfo.nextmeetingdetails[1], pdfinfo.nextmeetingdetails[2])
+    webcastlink = WebcastLink(pdfinfo.bSC and "securitycouncil" or "generalassembly", pdfinfo.sdate)
+    if webcastlink:
+        print '<li><a href="%s" title="Goto entry in list of webcasts">Webcast Video</a></li>' % (webcastlink)
+    
     print '<li>&nbsp;</li>'
     if pdfinfo.bGA:
         print '<li><a href="%s">Entire session</a></li>' % (EncodeHref({"pagefunc":"gasession", "gasession":pdfinfo.nsess}))

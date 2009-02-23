@@ -108,7 +108,7 @@ def WriteIndexStuffGA():
 
     print '<h3>General Assembly Sessions topics by year</h3>'
     print '<ul>'
-    for nsess in range(49, currentgasession + 1):
+    for nsess in range(currentgasession, 48, -1):
         print '<li>',
         print GetSessionLink(nsess, True),
         print '(%d-%d)' % (nsess + 1945, nsess + 1946)
@@ -131,7 +131,7 @@ def WriteCollapsedSec(sclist):
         print '<li><b>%s</b><ul>' % sctopic,
         for sdate, screcord in scgroup:
             patype = (not screcord.bparsed) and ' class="unparsed"' or '' 
-            print '<a href="%s"%s>%s</a>' % (screcord.GetHref(), patype, sdate),
+            print '<a href="%s"%s>%s</a>' % (screcord.GetHref(), patype, re.sub("-", "&#8209;", sdate)),
         print '</ul></li>'
 
 
@@ -174,24 +174,16 @@ def WriteWikiPage():
     print '<h3>Wikipedia table</h3>'
     print '<p>List of incoming links from Wikipedia from wikipedia articles.</p>'
     print '<table class="wpreftab">'
-    print '<tr> <th>Article</th> <th>Document</th> <th>Page</th> <th>Date</th> </tr>'
+    print '<tr> <th>N</th> <th>Document</th> <th>First</th> <th>Last</th> </tr>'
 
-    prevarticle, prevdocid, prevpage = "", "", ""
     for bigwikirow in bigwikitable:
-        warticle = bigwikirow[0]
-        wdocid = bigwikirow[1]
-        wpage = bigwikirow[2]
-        wtime = bigwikirow[3]
-        if (warticle, wdocid, wpage) != (prevarticle, prevdocid, prevpage):
-            print '<tr>',
-            if warticle != prevarticle:
-                print '<td class="wikiarticle"><a href="%s">%s</a></td>' % (bigwikirow[4], warticle),
-            else:
-                print '<td></td>'
-            print '<td><a href="/%s">%s</a>' % (bigwikirow[1], bigwikirow[1]),
-            print '<td>%s</td> <td>%s</td> </tr>' % (wpage, wtime)
-            prevarticle, prevdocid, prevpage = warticle, wdocid, wpage
-
+        if re.search("index.php", bigwikirow[4]):
+            continue
+        print '<tr>',
+        print '<td>%d</td>' % bigwikirow[2]
+        print '<td><a href="%s">%s</a></td>' % (bigwikirow[3], bigwikirow[4])
+        print '<td>%s</td><td>%s</td>' % (bigwikirow[1].strftime("%Y-%m-%d"), bigwikirow[0].strftime("%Y-%m-%d"))
+        print '</tr>'
     print '</table>'
     print '</div>'
 
@@ -199,23 +191,63 @@ def WriteWikiPage():
 def WriteFrontPage():
     WriteGenHTMLhead("Front page", frontpage=True)
 
-    print '''<p>This website provides easy access to the official transcripts of the two main
-             political bodies of the <a href="http://en.wikipedia.org/wiki/United_Nations_System">United Nations System</a>
-             where the ambassadors from each nation are entitled to speak, sponsor resolutions, and vote 
-             on a variety of issues.
-             Some of these activities have been documented in <a href="/incoming">Wikipedia articles</a> that cite 
-             back into these
-             transcripts.  For more, read <a href="#aboutfooter">about us</a>, or 
-             look up the speeches on behalf of <a href="/nations">your own nation</a>.</p>'''
+    print '''
+        <div style="padding: 1ex; margin: 3px; background-color:#f9b5b5; border: thin red solid; margin-top:0em; float:right; width:260px">
+                        <form method="post" action="http://www.theunsays.com/cgi-bin/emailnotify/singleform.cgi" id="singleform" name="singleform" >                           
+                        <strong>Email me when</strong> <input type="text" value="anything" size="9" onclick="this.value=''" name="keyword" /> appears in a press release.      
+                        <strong>Email:</strong> <input type="text" size="15" value="your address" onclick="this.value=''" name="email" />                                      
+                        <input type="hidden" name="source" value="undemocracy.com" />                                                                                          
+                        <input type="submit" onclick=" if ( document.singleform.keyword.value == 'anything' ) {document.singleform.keyword.value = ''; }                       
+                                                      if ( document.singleform.email.value == 'your address' ) {alert('email address missing'); return false; }                
+                                        " value="signup" />                                                                                                                    
+                        </form>  
+        </div>
+
+            <p style="margin-top:1em"><b>This website</b> gives easy access to the transcripts (since 1994) of 
+             two of the five principal 
+             <a href="http://en.wikipedia.org/wiki/United_Nations_System" title="Wikipedia article about the United Nations System"><b>United Nations bodies</b></a>.</p>  
+             
+             <p style="margin-top:0.5em">The 
+             <a href="http://en.wikipedia.org/wiki/United_Nations#Security_Council" title="Wikipedia article describing the Security Council"><b>Security Council</b></a> 
+             can authorize war and international sanctions.</p>
+
+             <p style="margin-top:0.5em">The 
+             <a href="http://en.wikipedia.org/wiki/United_Nations#General_Assembly" title="Wikipedia article describing the United Nations General Assembly"><b>General Assembly</b></a>
+             directs the business of the United Nations and 
+             recommends international treaties.
+             
+
+             <div style="padding: 1ex; margin: 3px; background-color:#f9b5b5; border: thin red solid; margin-top:0em; float:right; width:260px">Media: 
+             <a href="http://www.guardian.co.uk/technology/2008/mar/13/internet.politics">Newspaper article 13 March</a>, 
+             <a href="http://video.google.com/videoplay?docid=5811193931753907681&hl=en-GB">4 minute video presentation</a>,
+             <a href="http://citizenreporter.org/2008/01/bm241-making-better-use-of-the-united-nations/">Podcast interview</a>.
+             <br/>
+             Notes on the <a href="http://www.freesteel.co.uk/wpblog/category/whipping/un/">creator's blog</a>.
+             <br/>
+             <b>New:</b> Links to <a href="http://www.undemocracy.com/generalassembly/webcastindex">webcasts</a>.</div>
+             
+         <p style="margin-top:0.5em">Find out what <a href="/nations" title="List all nations and their ambassadors who speak"><b>your nation</b></a> has been doing in this international forum.</p>
+
+             <p style="margin-top:1em; margin-bottom:0.5em"><b style="background:#b3f1d7;">The third column</b> lists 
+             recent visits from Wikipedia readers.
+             <i>This is the best place to start browsing, 
+             because only some of documents are very interesting and you are unlikely to get lucky
+             if you click at random.</i></p>'''  
+    
+    print '''<p style="margin-botton:1em"><b>Note</b>: While Security Council meetings are on-line within 
+             hours, General Assembly transcripts go on-line three months after
+             the meeting (although the videos are up immediately).  The start of the 63rd 
+             session is <a href="http://www.un.org/ga/63/meetings63.shtml"><b>here</b></a>.</p>'''
+    
     print '<div id="sectors">'
     print '<div id="securitycouncil">'
     print '<h2>Security Council</h2>'
     
-    print '<p><a href="/securitycouncil">Meetings by topic</a></p>'
-    print '<p><a href="/securitycouncil/documents">All documents</a></p>'
+    print '<p><a href="/securitycouncil" title="Comprehensive list of meetings by date according to agenda item">Meetings by topic</a></p>'
+    print '<p><a href="/securitycouncil/documents" title="Table of documents of the Security Council by year">All documents</a></p>'
     
     print '<h3>Recent meetings</h3>'
-    recentsc = LoadSecRecords("recent")[:10]
+    recentsc = LoadSecRecords("recent")[:12]
     print '<ul class="cslist">'
     for screcord in recentsc:
         print '<li>%s</li>' % re.sub("--", " - ", screcord.GetDesc())  # sub to allow word wrapping
@@ -226,8 +258,8 @@ def WriteFrontPage():
     print '<div id="generalassembly">'
     print '<h2>General Assembly</h2>'
     
-    print '<p><a href="/generalassembly">Meetings by topic</a></p>'
-    print '<p><a href="/generalassembly/documents">All documents</a></p>'
+    print '<p><a href="/generalassembly" title="Table of sessions which link to comprehensive lists of agenda items">Meetings by topic</a></p>'
+    print '<p><a href="/generalassembly/documents" title="All documents of the General Assembly">All documents</a></p>'
     
     print '<h3>Recent meetings</h3>'
 
@@ -241,19 +273,20 @@ def WriteFrontPage():
 
     txtaboutus = """
     <h2>Information</h2>
-    <p>This site has nothing to do with the <b><a href="http://www.un.org/english">real UN website</a></b> 
-    or any part of the United Nations itself.  It is merely a private attempt to provide Web 2.0 compliant access to 
+    <p><b>This site</b> has nothing to do with the <b><a href="http://www.un.org/english">real UN website</a></b> 
+    or any part of the United Nations itself.  It has been supported by no organization. 
+    It is merely a citizens' attempt to provide Web 2.0 compliant access to 
     many of the important official UN documents 
     (eg <a href="http://en.wikipedia.org/wiki/United_Nations_Security_Council">Security Council Resolutions</a> 
     and <a href="http://en.wikipedia.org/wiki/United_Nations_General_Assembly">General Assembly votes</a>)
     which feature in the news.</p>
 
-    <p>For background information about the UN, its structure as well as the meaning and purpose of these documents, 
+    <p><b>For</b> background information about the UN and its structure, as well as the meaning and purpose of these documents, 
     check out <a href="http://en.wikipedia.org/wiki/United_Nations">United Nations on Wikipedia</a>
     and read the related articles.  
     Why not help to <a href="http://en.wikipedia.org/wiki/Wikipedia:WikiProject_United_Nations">improve them</a>?</p>
     
-    <p>For a quick tour of the sets of documents available here, look at
+    <p><b>For</b> a quick tour of the sets of documents that are available here, look at
     <a href="http://www.undemocracy.com/United_States/bush">President Bush</a> of
     <a href="http://www.undemocracy.com/United_States">The United States</a>, or
     <a href="http://www.undemocracy.com/Iran/ahmadinejad">President Ahmadinejad</a> of
@@ -261,7 +294,7 @@ def WriteFrontPage():
     <a href="http://www.undemocracy.com/S-RES-242(1967)">all speeches</a>
     that refer to <a href="http://en.wikipedia.org/wiki/United_Nations_Security_Council_Resolution_242">Resolution 242</a>.</p>
 
-    <p>Questions about this website in particular are answered by:
+    <p><b>Questions</b> about this website in particular are answered by:
     <a href="http://www.publicwhip.org.uk/faq.php#organisation">Who?</a>
     <a href="http://en.wikipedia.org/wiki/United_Nations_Document_Codes">What?</a>
     <a href="http://www.freesteel.co.uk/wpblog/category/whipping/un/">When?</a>
@@ -269,16 +302,19 @@ def WriteFrontPage():
     <a href="http://www.freesteel.co.uk/wpblog/2007/09/the-purpose-of-the-undemocracycom-site/"><b>Why?</b></a>
     <a href="http://www.freesteel.co.uk/wpblog/2007/09/how-does-undemocracycom-work/">How?</a>, and finally
     <a href="http://www.freesteel.co.uk/wpblog/2007/09/undemocracy-needs-your-help/">What can I do to help?</a>.</p>
-    <p>You can leave comments on some of those links, or email <a href="mailto:team@undemocracy.com">team@undemocracy.com</a>.
+    
+    <p><b>You</b> can leave comments on some of those links, or email <a href="mailto:team@undemocracy.com">team@undemocracy.com</a>.
+    Don't be shy.  
     This project is a hobby begun by volunteers who recognized that the accessibility of these vital documents 
-    was so limited they had to do something about it themselves.</p>"""
+    was so limited they had to do something about it themselves, since there was no evidence it was 
+    going to happen by itself.</p>"""
 
     shortwikitable = ShortWikipediaTable(12)
     if True:
         print '<div id="wpblogincoming">'
         print '<h2>Wikipedia referring articles</h2>'
-        print '<p><a href="/incoming">All incoming citations</a></p>'
-        print '<p><i>(<a href="http://en.wikipedia.org/wiki/Portal:United_Nations">Portal:United Nations</a>)</i></p>'
+        print '<p><a href="/incoming" title="Wikipedia articles which link to documents available on this website">All incoming citations</a></p>'
+        print '<p><i>(<a href="http://en.wikipedia.org/wiki/Portal:United_Nations" title="Wikipedia project: United Nations Portal">Portal:United Nations</a>)</i></p>'
         print '<h3>Recently followed citations</h3>'
         print '<ul class="cslist">'
         for shortwikirow in shortwikitable:
@@ -286,6 +322,7 @@ def WriteFrontPage():
             print '<li>%s %s (%s) <a href="%s">%s</a></td> </li>' % (shortwikirow[0], shortwikirow[1], shortwikirow[2], shortwikirow[3], shortwikirow[4])
 
         print '</ul>'
+        print '<p><a href="/incoming" title="Wikipedia articles which link to documents available on this website">more...</a></p>'
         print '</div>'
 
     print '<div id="aboutfooter">'

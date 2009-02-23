@@ -7,6 +7,8 @@ from nations import nationdates
 from unmisc import GetAllHtmlDocs, IsNotQuiet
 from pdfinfo import PdfInfo
 import datetime
+from db import GetDBcursor, AddWholeDivision
+
 
 
 #        document_id = re.search('<span class="code">([^<]*)</span>', doccontent).group(1)
@@ -77,6 +79,7 @@ def GenerateNationData(nationactivitydir, htmldir):
     # collection nation speeches and votes
     # make this big mapping of votes
     # also collect the full names of the ambassadors
+    c = GetDBcursor()
 
     nationdict = { }  # used for measuring vote distances (maps from voteids to vote directions)
     for nation in nationdates:
@@ -98,6 +101,7 @@ def GenerateNationData(nationactivitydir, htmldir):
         fin.close()
 
         docid = re.search("((?:A-\d\d|S-PV).*?)\.html$", htdoc).group(1)
+        body = (docid[0] == "A" and "GA" or "SC")
         sdate = re.search('<span class="date">([^<]*)</span>', ftext).group(1)
         if IsNotQuiet():
             print docid,
@@ -114,11 +118,17 @@ def GenerateNationData(nationactivitydir, htmldir):
                 motiontext = mvote.group(1)
                 motiontext = re.sub('<a [^>]*>([^<]*)</a>', "\\1", motiontext)
                 motiontext = re.sub("<[^>]*>", " ", motiontext)
-                motiontext = re.sub(" (?:was|were) (?:retained|adopted|rejected) by .*? abstentions", "", motiontext)
+                motiontext = re.sub(" (?:was|were) (?:retained|adopted|rejected) by (?:.*? abstentions?|\d+ votes to \d+)", "", motiontext)
                 votesum = (docid, gid, tuple(vnum), sdate, motiontext)  # this 4-tuple identifies a vote
+                
+                #print "adding to database", mvote.group(2)
 
-                for mvoten in re.finditer('<span class="[^<]*?([^<\-]*)">([^<]*)</span>', mvote.group(3)):
-                    nationdict[mvoten.group(2)].AddVoteMade(votesum, mvoten.group(1))  # big mapping table
+                for mvoten in re.finditer('<span class="([^"\-]*)-?([^"]*)">([^<]*)</span>', mvote.group(3)):
+                    nation = mvoten.group(3)
+                    vote = mvoten.group(1)
+                    intendedvote = mvoten.group(2) or vote
+
+                    nationdict[nation].AddVoteMade(votesum, intendedvote)  # big mapping table
 
             elif mdiv.group(1) == "spoken":
                 mspeaker = re.search('<h3 class="speaker"> <span class="name">([^<]*)</span>(?: <span class="(nation|non-nation)">([^<]*)</span>)?(?: <span class="language">[^<]*</span>)? </h3>', mdiv.group(3))

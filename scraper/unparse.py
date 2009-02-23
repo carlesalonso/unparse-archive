@@ -53,8 +53,11 @@ def GroupParas(tlcall, undocname, sdate, seccouncilmembers):
             assert not res[-1].rosetime
             res[-1].rosetime = sdate[10:].strip() # the missing rosetimes
         if not res[-1].rosetime:
-            res[-1].writeblock(sys.stdout)
-            raise unexception("can't find rosetime", res[-1].paranum)
+            if undocname == "A-62-PV.79":
+                res[-1].rosetime = "06:05"
+            else:
+                res[-1].writeblock(sys.stdout)
+                raise unexception("can't find rosetime", res[-1].paranum)
 
     return res
 
@@ -64,6 +67,8 @@ def ParsetoHTML(stem, pdfxmldir, htmldir, bforceparse, beditparse, bcontinueoner
     undocnames = [ ]
     for undoc in os.listdir(pdfxmldir):
         undocname = os.path.splitext(undoc)[0]
+        if undoc[-1] == "~":
+            continue
         if not re.match(stem, undocname):
             continue
         if re.search("Corr", undocname): # skip corregendas

@@ -1,6 +1,11 @@
 #!/usr/bin/python
+# -*- coding: latin1 -*-
 
 # !!!!!!  Shared with web2 !!!!!!!
+
+# something else which might do this:
+#import unicodedata
+#return unicodedata.normalize('NFKD', unicode(string)).encode('ASCII', 'ignore')
 
 # utility I wish was in the library
 # is there a more efficient char substitution system?
@@ -11,6 +16,7 @@ def DownAscii(st):
     st = st.replace("ã", "a")
     st = st.replace("ä", "a")
     st = st.replace("å", "a")
+    st = st.replace("Ü", "A")
     st = st.replace("ç", "c")
     st = st.replace("é", "e")
     st = st.replace("ë", "e")
@@ -54,3 +60,5 @@ def DownAscii(st):
     st = st.replace("Í", "i")
 
     return st
+# Anal
+# Anal

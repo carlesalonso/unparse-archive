@@ -44,7 +44,7 @@ def SetCallScrape(lsCallScrape):
     sCallScrape = lsCallScrape
 
 reressplit = """(?x)(
-                (?:[Dd]ocument\s)?A/(?:[A-Z][\.\d]*/)?\d+/[\w\d\.]*?[l\d]+(?:/(?:Add|Rev)\.[l\d]+)?(?:/(?:Add|Rev)\.[l\d]+)?(?:/Corr.\d)?|
+                (?:[Dd]ocument\s)?A/(?:[A-Z][\-\.\d]*/)?\d+/[\w\d\.]*?[l\d]+(?:/(?:Add|Rev)\.[l\d]+)?(?:/(?:Add|Rev)\.[l\d]+)?(?:/Corr.\d)?|
                 (?:General\sAssembly\s|Economic\sand\sSocial\sCouncil\s)?[Rr]esolutions?\s\d+/[\dCLXVI]+[A-Y]?|
                 draft\sresolution\sA/\d\d/L\.\d+(?:/Add.\d)?(?:/Rev.\d)?|
                 A/RES/\d+/\d+|
@@ -63,6 +63,7 @@ reressplit = """(?x)(
                 HIV/AIDS/CRP.\d(?:/Add.\d)?|
                 E/CN.\d+/\d+/(?:L\.)?\d+(?:/Add.\d)?|
                 A/AC.\d+/(?:L\.)?\d+(?:/(?:CRP\.|WP\.)?\d+)?(?:/Rev\.2)?|
+                A/C\.\d/\d+/INF/1|
                 JIU/REP/\d+/\d+|
                 CS?D/\d+(?:/\d+)?|
                 ISBA/A/L.\d/Rev.\d|
@@ -85,6 +86,7 @@ reressplit = """(?x)(
                 (?:the\s)?resolution\s\(\d\d/\d+\)|
                 (?:Security\sCouncil\s)?(?:[Rr]esolutions?\s)?(?:S/RES/)?\d+\s\(\d\d\d\d\)|
                 Corr.\d|
+                Add.\d|
                 (?<=\s)[3-6]\d/\d{1,3}(?=[\s,\.])|
                 </b>\s*<b>|
                 </i>\s*<i>|
@@ -167,7 +169,7 @@ def MarkupLinks(paratext, undocname, paranum):
         mresb = re.match("(?:the )?resolution \((\d+)/(\d+)\)$", st)
         mresc = re.match("([3-6]\d)/(\d{1,3})$", st)
         meres = re.match("Economic and Social Council (?:resolution|decision) (\d+)/([\dCLXVI]+)(?:\s*(\w))?", st)
-        mdoc = re.match("(?:[Dd]ocument |draft resolution )?A/(?:(C\.\d|INF|HRC)/)?(\d+)/(\S*)", st)
+        mdoc = re.match("(?:[Dd]ocument |draft resolution )?A/(?:(C\.\d|INF|HRC|S-\d+)/)?(\d+)/(\S*)", st)
         mscdoc = re.match("(?:[Dd]ocument )?S/(\d+)(?:/(\d+))?(?:/Add\.(\d+))?(?:/Rev\.(\d+))?(?:/Add\.(\d))?(?:/Corr\.(\d))?$", st)
         mscprst = re.match("S/PRST/(\d+)/(\d+)", st)
         mscprst2 = re.match("S/(\d\d\d\d)/PRST/(\d+)", st)
@@ -175,6 +177,7 @@ def MarkupLinks(paratext, undocname, paranum):
         msecres = re.match("(?:Security Council )?(?:[Rr]esolutions? )?(?:S/RES/)?(\d+) \((\d\d\d\d)\)", st)
         mcan = re.match("</b>\s*<b>|</i>\s*<i>", st)
         mcorr = re.match("Corr.(\d)", st)
+        madd = re.match("Add.(\d)", st)
         maltreg = re.match("(?:[Rr]egulation|presidential\sdecree)\s\d+/\d+", st)
         msecpress = re.match("(press (?:release|statement)) SC/(\d\d\d\d)", st)
         #print st, mdoc
@@ -188,6 +191,7 @@ def MarkupLinks(paratext, undocname, paranum):
                                  E/CN.\d+/\d+/(?:L\.)?\d+(?:/Add.\d)?|
                                  S-\d+/\d|
                                  A/AC.\d+/(?:L\.)?\d+(?:/(?:CRP\.|WP\.)?\d+)?(?:/Rev\.2)?|
+                                 A/C\.\d/\d+/INF/\d|
                                  C/E/RES.27|
                                  JIU/REP/\d+/\d+|
                                  NPT/CONF.\d+/(?:TC.\d/)?\d+|
@@ -260,7 +264,7 @@ def MarkupLinks(paratext, undocname, paranum):
             link = "S-PV-%s" % (mscpv.group(1))
             res.append(MakeCheckLink(link, st, undocname))
         elif msecres:
-            if not (1945 < int(msecres.group(2)) < 2008):  # should use current document year
+            if not (1945 < int(msecres.group(2)) < 2009):  # should use current document year
                 print st
                 raise unexception("year on resolution not possible", paranum)
             link = "S-RES-%s(%s)" % (msecres.group(1), msecres.group(2))
@@ -269,6 +273,11 @@ def MarkupLinks(paratext, undocname, paranum):
             if link and re.search("Corr", link):
                 link = re.sub("-Corr.\w$", "", link)
             link = "%s-Corr.%s" % (link, mcorr.group(1))
+            res.append(MakeCheckLink(link, st, undocname))
+        elif madd:
+            if link and re.search("Add", link):
+                link = re.sub("-Add.\w$", "", link)
+            link = "%s-Add.%s" % (link, madd.group(1))
             res.append(MakeCheckLink(link, st, undocname))
         elif mcan:
             res.append(' ')
@@ -285,7 +294,7 @@ def MarkupLinks(paratext, undocname, paranum):
                 #print re.split(reressplit, st)
                 jjst = re.sub("(?:[a-zA-Z<)\"]|G-7)/[a-zA-Z]|20/20|9/11|HIV/AIDS|[12][90]\d\d/[12][90]\d\d", "", st)
                 if re.search("/", jjst):
-                    print "Failed with "+st
+                    print "Failed with ", st
                     raise unexception("bad / in paratext", paranum)
             res.append(st)
         #print st,
@@ -344,6 +353,7 @@ def LinkTemplate(undocname, docdate, gid):
 
 
 def GetAllHtmlDocs(stem, bunindexed, bforce, htmldir):
+
     # this has to be able to sift between the unindexed and indexed types
     relsm = {}
     relsum = {}
@@ -351,7 +361,7 @@ def GetAllHtmlDocs(stem, bunindexed, bforce, htmldir):
     filelist = os.listdir(htmldir)
     filelist.sort(reverse = True)
     for d in filelist:
-        if re.search("(?:\.css|\.svn|\.js)$", d):
+        if re.search("(?:\.css|\.svn|\.js|~)$", d):
             continue
         if stem and not re.match(stem, d):
             continue
