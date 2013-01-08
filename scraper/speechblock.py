@@ -578,4 +578,3 @@ class SpeechBlock:
             return ""
 
         return res
-

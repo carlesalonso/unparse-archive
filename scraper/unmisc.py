@@ -58,7 +58,7 @@ reressplit = """(?x)(
                 S/PRST/\d+/\d+|
                 S/\d+/PRST/\d+|
                 S/PV\.\d+|
-                A/(?:CONF|INF|HRC)[\./]\d+/(?:L\.)?\d+(?:/(?:Rev\.)?[l\d])?(?:/(?:Add\.)?[l\d])?|
+                A/(?:CONF|INF|HRC)[\./](?:S-)?\d+/(?:L\.)?\d+(?:/(?:Rev\.)?[l\d])?(?:/(?:Add\.)?[l\d])?|
                 GC\([\dLXIV]*\)(?:/RES|/DEC)?/\d+[A-X]?|
                 SG/SM/\d+|
                 S-\d+/\d|
@@ -373,7 +373,7 @@ def GetAllHtmlDocs(stem, bunindexed, bforce, htmldir):
     filelist = os.listdir(htmldir)
     filelist.sort(reverse = True)
     for d in filelist:
-        if re.search("(?:\.css|\.svn|\.js|~)$", d):
+        if re.search("(?:\.css|\.svn|\.js|\.tmp|~)$", d):
             continue
         if stem and not re.match(stem, d):
             continue
@@ -429,5 +429,4 @@ def RomanToDecimal(rn):
         del lrn[-1]
     assert not lrn, rn
     return res
-
 

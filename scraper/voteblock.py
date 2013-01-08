@@ -261,4 +261,3 @@ class VoteBlock:
         fout.write('\t<p class="votecount" id="%s-pa02">%s</p>\n' % (bgid, self.votecount))
         fout.write('\t<p class="votelist" id="%s-pa03">%s</p>\n' % (bgid, self.votelist))
         fout.write('</div>\n')
-

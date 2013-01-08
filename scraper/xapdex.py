@@ -180,7 +180,7 @@ def MakeBaseXapianDoc(mdiv, tdocument_id, document_date, headingterms):
 
         if not paraclass or paraclass in ['boldline-p', 'boldline-indent', 'boldline-agenda', 'motiontext']:
             if paraclass == 'boldline-agenda':
-                paratext = re.sub("[^;]*;?", paratext) # throw out all, or all up to ';'
+                paratext = re.sub("[^;]*;?", "", paratext) # throw out all, or all up to ';'
 
             #print paraclass, paratext
             for wtxt in re.split(wsplit, paratext):
@@ -280,7 +280,7 @@ def process_file(pfnameunindexed, xapian_db):
 
     # Loop through each speech, and batch up the headings so they can be updated with the correct info
     xapian_doc_heading = None
-    sdiv_headingdata = None
+    sdiv_headingdata = "NOHEADINGSET"  # kills off the assertion that happens later.  we can get a "meeting began" before the first heading
     xapian_doc_subheading = None
     sdiv_subheadingdata = None
 
@@ -348,7 +348,7 @@ def process_file(pfnameunindexed, xapian_db):
                 xapian_doc_heading = None
 
         else:
-            assert div_class in ["assembly-chairs", "council-agenda", "council-attendees", "spoken", "italicline", "italicline-tookchair", "italicline-spokein", "recvote"], "unknown divclass:%s" % div_class
+            assert div_class in ["assembly-chairs", "council-agenda", "council-attendees", "spoken", "italicline", "italicline-tookchair", "italicline-spokein", "recvote", "boldline"], "unknown divclass:%s" % div_class
             assert sdiv_subheadingdata or sdiv_headingdata
             ddata = "%s|%s|%d|%d|%s|" % (div_data[3], div_data[0], div_data[1], div_data[2], (sdiv_subheadingdata or sdiv_headingdata)[3])
             xapian_doc.set_data(ddata)

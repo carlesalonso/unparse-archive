@@ -13,7 +13,7 @@ sys.path.append("../pylib")
 from config import *  # this must bring in htmldir
 
 nowdatetime = datetime.datetime.now().strftime("%Y-%m-%d;%H:%M")
-currentgasession = 63
+currentgasession = 64
 currentscyear = datetime.datetime.now().year  #2007
 basehref = "http://www.undemocracy.com"
 
